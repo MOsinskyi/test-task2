@@ -5,7 +5,7 @@ description = ""
 authors = [
     {name = "Maksym",email = "maximosinskiy@gmail.com"}
 ]
-requires-python = ">=3.14"
+requires-python = ">=3.14,<4"
 dependencies = [
     "fastapi (>=0.136.3,<0.137.0)",
     "alembic (>=1.18.4,<2.0.0)",
@@ -16,8 +16,13 @@ dependencies = [
     "redis (>=8.0.0,<9.0.0)",
     "pydantic-settings (>=2.14.1,<3.0.0)",
     "python-dotenv (>=1.2.2,<2.0.0)",
+    "fastapi-limiter @ git+https://github.com/long2ice/fastapi-limiter",
+    "fastapi-mail (>=1.6.4,<2.0.0)",
 ]
 
+
+[tool.poetry]
+package-mode = false
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
@@ -27,5 +32,6 @@ build-backend = "poetry.core.masonry.api"
 dev = [
     "pytest (>=9.0.3,<10.0.0)",
     "httpx (>=0.28.1,<0.29.0)",
-    "pytest-asyncio (>=1.4.0,<2.0.0)"
+    "pytest-asyncio (>=1.4.0,<2.0.0)",
+    "ruff (>=0.15.15,<0.16.0)"
 ]
