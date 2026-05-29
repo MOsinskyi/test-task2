@@ -1,14 +1,14 @@
 import asyncio
+from datetime import datetime, timezone
+
 from celery import Celery
 from celery.schedules import crontab
-from sqlalchemy import delete
-from datetime import datetime, timezone
-from src.config import settings
-from src.database import engine
-from src.tasks.models import Task, TaskStatus
+from sqlalchemy import select
 
-from sqlalchemy import delete, select
+from src.config import settings
+from src.database import AsyncSessionLocal
 from src.mail import send_task_notification
+from src.tasks.models import Task, TaskStatus
 
 celery_broker_url = f"redis://{settings.redis.host}:{settings.redis.port}/{settings.redis.db.cache}"
 
@@ -17,15 +17,14 @@ celery_app = Celery("worker", broker=celery_broker_url, backend=celery_broker_ur
 @celery_app.task
 def delete_overdue_tasks():
     async def _process():
-        async with engine.begin() as conn:
+        async with AsyncSessionLocal() as session:
             now = datetime.now(timezone.utc)
-            
-            # Find overdue tasks
+
             select_stmt = select(Task).where(
                 Task.due_date < now,
                 Task.status != TaskStatus.COMPLETED
             )
-            result = await conn.execute(select_stmt)
+            result = await session.execute(select_stmt)
             overdue_tasks = result.scalars().all()
             
             if overdue_tasks:
@@ -34,12 +33,11 @@ def delete_overdue_tasks():
                     subject=f"Overdue Tasks Notification",
                     body=f"The following tasks are overdue and will be deleted:\n{task_list}"
                 )
+
+                for task in overdue_tasks:
+                    await session.delete(task)
                 
-                # Delete overdue tasks
-                delete_stmt = delete(Task).where(
-                    Task.id.in_([t.id for t in overdue_tasks])
-                )
-                await conn.execute(delete_stmt)
+                await session.commit()
     
     asyncio.run(_process())
 
