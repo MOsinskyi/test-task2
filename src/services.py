@@ -31,12 +31,7 @@ class BaseService:
 
     @servicemethod()
     async def get(self, id_: int) -> Base | None:
-        instance = await self.repository.get(id_)
-
-        if not instance:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"{self.repository.model.__name__} not found")
-
-        return instance
+        return await self.repository.get(id_)
 
     @servicemethod()
     async def patch(self, id_: int, **kwargs) -> Base:
